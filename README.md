@@ -10,6 +10,15 @@ Prosta strategia czasu rzeczywistego (RTS) w klimacie klasycznych gier typu Red 
 - Rekordy zapisują się na urządzeniu, osobno dla każdej wielkości mapy.
 - Działa **offline**: czcionki są wbudowane w plik, gra nie pobiera niczego z internetu.
 
+## Co nowego
+
+- **Jednostki:** Zwiadowca, Wyrzutnia SAM, Mamut, Śmigłowiec bojowy, Niszczyciel.
+- **Budynki:** Bunkier, Wieża SAM, Warsztat, Centrum Badań.
+- **Super bronie:** Zenit (COD, uderzenie orbitalne) i Pożoga (BF, rakieta napalmowa). Wróg też ich używa, a koło celu widać na mapie i minimapie.
+- **Sterowanie:** grupy Ctrl+1…9, atak w marszu (F), utrzymanie pozycji (H), super broń (Z), skok do bazy (B), skok do alarmu (Spacja), Shift dodaje do zaznaczenia, środkowy przycisk przesuwa mapę.
+- **Sztuczna inteligencja:** wróg planuje rozwój, wysyła różne typy jednostek, rajdy zwiadowców, lotnictwo, odpiera ataki i odpala super broń.
+- **Grafika i dźwięk:** nowe modele, dym uszkodzonych jednostek, wstrząs ekranu, nowe efekty dźwiękowe.
+
 ## Jak uruchomić
 
 Cała gra to jeden plik: [`index.html`](index.html).
@@ -33,8 +42,7 @@ Kod w `index.html` dzieli się na dwie części:
 ## Plany
 
 - Podział jednego dużego pliku na osobne moduły.
-- Dopracowanie sztucznej inteligencji przeciwnika i balansu stron COD i BF.
-- Nowe jednostki i budynki.
+- Dalsze dopracowanie balansu stron COD i BF.
 - Dalsza przyszłość: port do Unreal Engine 5.
 
 ## Licencja
