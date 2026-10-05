@@ -1,0 +1,29 @@
+# Gotowe paczki i archiwa (trzymamy je poza repozytorium)
+*.apk
+*.aab
+*.zip
+
+# Klucze do podpisywania aplikacji Androida - NIGDY nie publikować
+*.keystore
+*.jks
+keystore.properties
+
+# Pliki Androida generowane przy budowaniu
+.gradle/
+build/
+local.properties
+*.iml
+.idea/
+
+# Node (jeśli kiedyś dojdą narzędzia do budowania)
+node_modules/
+
+# Pliki systemowe
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Pliki tymczasowe
+*.log
+*.tmp
+*.bak
