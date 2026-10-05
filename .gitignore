@@ -27,3 +27,6 @@ desktop.ini
 *.log
 *.tmp
 *.bak
+
+# wyjątek: szablon APK potrzebny do budowania
+!android/template.apk

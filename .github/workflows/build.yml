@@ -31,7 +31,7 @@ jobs:
           mkdir work && cd work && unzip -q ../android/template.apk
           rm -rf META-INF && cp ../index.html assets/index.html
           zip -q -X -0 ../unsigned.apk resources.arsc
-          zip -qr -X ../unsigned.apk AndroidManifest.xml classes.dex res assets
+          zip -qrD -X ../unsigned.apk AndroidManifest.xml classes.dex res assets
           cd ..
           "$BT/zipalign" -f -p 4 unsigned.apk aligned.apk
           if [ -n "${{ secrets.KEYSTORE_B64 }}" ]; then
