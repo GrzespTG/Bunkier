@@ -1,0 +1,51 @@
+name: Testy i APK
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Playwright
+        run: |
+          npm init -y >/dev/null
+          npm i playwright
+          npx playwright install --with-deps chromium
+      - name: Test dymny gry
+        run: node tests/smoke.js
+
+  apk:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Złóż APK z index.html
+        run: |
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          mkdir work && cd work && unzip -q ../android/template.apk
+          rm -rf META-INF && cp ../index.html assets/index.html
+          zip -q -X -0 ../unsigned.apk resources.arsc
+          zip -qr -X ../unsigned.apk AndroidManifest.xml classes.dex res assets
+          cd ..
+          "$BT/zipalign" -f -p 4 unsigned.apk aligned.apk
+          if [ -n "${{ secrets.KEYSTORE_B64 }}" ]; then
+            echo "${{ secrets.KEYSTORE_B64 }}" | base64 -d > ks.jks
+            PASS="${{ secrets.KEYSTORE_PASS }}"
+          else
+            echo "::warning::Brak sekretu KEYSTORE_B64 - podpisuję kluczem tymczasowym (nie nadaje się do aktualizacji)."
+            PASS=bunkier123
+            keytool -genkeypair -keystore ks.jks -storepass $PASS -keypass $PASS -alias bunkier -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=BUNKIER,O=GrzespTG"
+          fi
+          "$BT/apksigner" sign --ks ks.jks --ks-pass pass:$PASS --ks-key-alias bunkier --out BUNKIER.apk aligned.apk
+          "$BT/apksigner" verify --verbose BUNKIER.apk
+          unzip -p BUNKIER.apk assets/index.html | cmp - index.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BUNKIER-apk
+          path: BUNKIER.apk

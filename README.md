@@ -45,6 +45,12 @@ Kod w `index.html` dzieli się na dwie części:
 - Dalsze dopracowanie balansu stron COD i BF.
 - Dalsza przyszłość: port do Unreal Engine 5.
 
+## Testy i budowanie APK
+
+Po każdym wypchnięciu zmian GitHub Actions uruchamia test dymny (`tests/smoke.js`: ładowanie gry, sterowanie, budowa, super bronie, AI, brak błędów w konsoli), a dopiero potem składa i podpisuje APK (artefakt `BUNKIER-apk` w zakładce Actions). Lokalnie: `npm i playwright && node tests/smoke.js`.
+
+Aby APK dało się aktualizować bez odinstalowywania, dodaj w Settings → Secrets sekrety `KEYSTORE_B64` (plik .jks zakodowany base64) i `KEYSTORE_PASS`. Bez nich budowany jest APK z kluczem tymczasowym.
+
 ## Licencja
 
 Kod gry na licencji [MIT](LICENSE). Wbudowane czcionki (Barlow Condensed, IBM Plex Mono, Saira Stencil One) oraz biblioteka Three.js mają własne, otwarte licencje.
