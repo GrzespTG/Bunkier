@@ -180,6 +180,7 @@ button:focus-visible{outline:2px solid var(--brass2);outline-offset:2px}
       <div class="stat"><span class="lab">Stal</span><span class="val" id="hStal">0</span></div>
       <div class="stat"><span class="lab">Paliwo</span><span class="val" id="hFuel">0</span><span class="lab" id="hFuelRate" title="Przychód paliwa z Rafinerii i Sztabu"></span><span class="fuelbar"><i id="hFuelBar"></i></span></div>
       <div class="stat"><span class="lab">Czas</span><span class="val" id="hTime">0:00</span></div>
+      <div class="stat"><span class="lab" id="hFps" title="Klatki na sekundę · skala rozdzielczości (Auto dopasowuje ją do płynności)"></span></div>
       <div class="sp"></div>
       <button class="hbtn sw" id="bSW" title="Super broń (Z)" hidden></button>
       <button class="hbtn" id="bSound" title="Wycisz (M)" aria-pressed="false">🔊</button>
@@ -239,6 +240,15 @@ button:focus-visible{outline:2px solid var(--brass2);outline-offset:2px}
       <button data-d="normal" aria-pressed="true">Normalny</button>
       <button data-d="hard" aria-pressed="false">Trudny</button>
     </div>
+    <p class="lbl">Grafika</p>
+    <div class="seg" id="gfxSeg">
+      <button data-g="auto" aria-pressed="false">Auto</button>
+      <button data-g="low" aria-pressed="false">Niska</button>
+      <button data-g="mid" aria-pressed="false">Średnia</button>
+      <button data-g="high" aria-pressed="false">Wysoka</button>
+      <button data-g="ultra" aria-pressed="false">Ultra</button>
+    </div>
+    <p class="hint" id="gfxNote" style="margin:-4px 0 0;font-size:14px;color:var(--muted)"></p>
     <div class="vols">
       <div><p class="lbl">Muzyka</p>
       <div class="seg" id="musSeg"><button data-v="0" aria-pressed="false">Wył.</button><button data-v="1" aria-pressed="false">Cicho</button><button data-v="2" aria-pressed="true">Średnio</button><button data-v="3" aria-pressed="false">Głośno</button></div></div>
@@ -293,6 +303,8 @@ button:focus-visible{outline:2px solid var(--brass2);outline-offset:2px}
       <p>Każdy budynek stawia Buldożer A.R.K.A.D.I.U.S.Z. (jeden masz na starcie, kolejne zamówisz w Sztabie). Otwórz menu „Budowa” (przycisk w prawym dolnym rogu albo klawisz Tab), wybierz budynek i wskaż miejsce. Plac budowy powstaje od razu, a najbliższy wolny buldożer sam tam dojedzie i zbuduje. Stocznię stawia się przy wodzie. Jednostki zamawiasz w menu „Produkcja” (kliknij ten sam przycisk, żeby je zwinąć); czerwony przycisk „−” na ikonie (albo prawy przycisk myszy) anuluje jedną sztukę z kolejki i zwraca stal. Gdy zaznaczysz budynek produkcyjny, kliknięcie na mapie ustawia punkt zbiórki.</p>
       <h4>Buldożer A.R.K.A.D.I.U.S.Z.</h4>
       <p>Buduje i naprawia. Gdy nie ma zadania, sam naprawia uszkodzone budynki w pobliżu (naprawa kosztuje trochę stali). Możesz też zaznaczyć buldożer i kliknąć uszkodzony budynek albo plac budowy. Dwa buldożery budują szybciej.</p>
+      <h4>Grafika</h4>
+      <p>W menu głównym wybierasz jakość: Auto (domyślnie), Niska, Średnia, Wysoka lub Ultra. Auto dopasowuje rozdzielczość do ekranu i płynności — liczba na pasku u góry to klatki na sekundę i skala rozdzielczości. Jeśli gra się zacina, wybierz niższą jakość; jeśli masz mocne urządzenie, wybierz Ultra.</p>
       <h4>Mapy</h4>
       <p>Przed bitwą wybierasz stronę (kolor), typ mapy (zielona, pustynna, zimowa, morska z przewagą wody) i jej wielkość. Układ mapy jest losowany przy każdej grze. Obie bazy mają zawsze takie same warunki, a do wroga zawsze prowadzi droga lądowa (na mapie morskiej przez brody).</p>
       <h4>Wieże</h4>
@@ -5919,9 +5931,19 @@ function resume(){ST.mode='play';show(null);}
 function toMenu(){SFX.forMenu();newGame('normal',(Math.random()*1e9)|0,true);ST.mode='menu';show('menu');updPanel();refreshInfo(true);}
 
 /* ---------- START ---------- */
+function adaptRes(raw){
+  if(!R3||!R3.auto||ST.mode!=='play'||raw>0.5||raw<=0)return;
+  const A=adaptRes;A.t=(A.t||0)+raw;A.n=(A.n||0)+1;
+  if(A.t<1.2)return;
+  const fps=A.n/A.t;A.t=0;A.n=0;R3.fps=fps;
+  if(fps<38&&R3.scale>0.56){R3.scale=Math.max(0.56,R3.scale-0.12);A.good=0;resize();}
+  else if(fps>56){A.good=(A.good||0)+1;if(A.good>=3&&R3.scale<1){R3.scale=Math.min(1,R3.scale+0.06);A.good=0;resize();}}
+  else A.good=0;
+}
 function frame(now){
-  const dt=Math.min(0.05,(now-(frame.last||now))/1000);frame.last=now;
-  if(G&&ST.mode==='play'){scrollCam(dt);for(let k=0;k<ST.speed&&!G.over;k++)update(dt);G.hudT-=dt;if(G.hudT<=0){G.hudT=.2;updPanel();}}
+  const raw=(now-(frame.last||now))/1000;
+  const dt=Math.min(0.05,raw);frame.last=now;adaptRes(raw);
+  if(G&&ST.mode==='play'){scrollCam(dt);for(let k=0;k<ST.speed&&!G.over;k++)update(dt);G.hudT-=dt;if(G.hudT<=0){G.hudT=.2;updPanel();const hf=$('#hFps');if(hf&&R3)hf.textContent=(R3.fps?Math.round(R3.fps)+' kl/s · ':'')+Math.round(R3.scale*100)+'%';}}
   else if(G&&ST.mode==='menu'){G.time+=dt;G.cam.x+=dt*14;if(G.cam.x>MW*T-viewW()-40)G.cam.x=-30;clampCam();}
   render();if(G&&ST.mode==='play'&&G.visT>0.2)drawMini();
   requestAnimationFrame(frame);
@@ -5951,6 +5973,10 @@ function boot(){
   SFX.init();
   $('#bMenu').onclick=()=>{if(ST.mode==='play')pause();else if(ST.mode==='pause')resume();};
   $('#bSpeed').onclick=()=>{ST.speed=ST.speed===1?2:ST.speed===2?3:1;$('#bSpeed').textContent=ST.speed+'×';};
+  {const sg=$('#gfxSeg'),note=$('#gfxNote');
+   const txt={auto:'Auto: rozdzielczość sama dopasowuje się do ekranu i płynności gry.',low:'Niska: najszybciej, bez cieni.',mid:'Średnia: cienie, rozdzielczość natywna.',high:'Wysoka: cienie, poświata, natywna rozdzielczość.',ultra:'Ultra: największa ostrość i cienie, wymaga mocnego urządzenia.'};
+   const sync=()=>{for(const b of sg.children)b.setAttribute('aria-pressed',b.dataset.g===GFX.mode?'true':'false');note.textContent=txt[GFX.mode]+' Zmiana restartuje grę.';};
+   sync();sg.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.dataset.g===GFX.mode)return;GFX.mode=b.dataset.g;try{localStorage.setItem('bunkier.gfx',GFX.mode);}catch(_){}sync();setTimeout(()=>location.reload(),150);});}
   $('#tBuild').onclick=()=>{if(ST.mode==='play')togglePop('popB');};
   $('#tProd').onclick=()=>{if(ST.mode==='play')togglePop('popU');};
   cv.addEventListener('pointerdown',()=>closePops());
@@ -6035,21 +6061,26 @@ function injectFog(mat){
 }
 
 /* ---------- inicjalizacja ---------- */
+const GFX={mode:'auto'};
+try{const m=localStorage.getItem('bunkier.gfx');if(['auto','low','mid','high','ultra'].includes(m))GFX.mode=m;}catch(e){}
 function init3D(){
   cv=$('#cv');
   const qs=location.hash+location.search;
   const touch=matchMedia('(pointer:coarse)').matches;
   try{
-    renderer=new THREE.WebGLRenderer({canvas:cv,antialias:false,powerPreference:'high-performance',alpha:false,stencil:false});
+    renderer=new THREE.WebGLRenderer({canvas:cv,antialias:!/lowfx/.test(qs),powerPreference:'high-performance',alpha:false,stencil:false});
   }catch(e){NO_GL=true;showNoGL();return;}
   const gl=renderer.getContext();
   const ext=gl.getExtension('WEBGL_debug_renderer_info');
   const gname=ext?String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)):'';
   const soft=/swiftshader|llvmpipe|software|softpipe/i.test(gname);
   let q=soft?'low':touch?'mid':'high';
-  if(/lowfx/.test(qs))q='low';else if(/midfx/.test(qs))q='mid';else if(/hq/.test(qs))q='high';
-  R3={q,cssW:1,cssH:1,forG:null,dprMax:q==='high'?2:q==='mid'?1.5:1,
-      shadows:q!=='low',shadowSize:q==='high'?2048:1024,bloom:q==='high',gname};
+  if(GFX.mode!=='auto')q=GFX.mode;
+  if(/lowfx/.test(qs))q='low';else if(/midfx/.test(qs))q='mid';else if(/hq/.test(qs))q='high';else if(/ultra/.test(qs))q='ultra';
+  const hi=q==='high'||q==='ultra';
+  R3={q,touch,auto:GFX.mode==='auto'&&!/lowfx|midfx|hq|ultra/.test(qs),scale:1,cssW:1,cssH:1,forG:null,dprMax:q==='ultra'?3:hi||q==='mid'?2:1,
+      maxPx:q==='ultra'?2.4e7:hi?1.2e7:touch?3.4e6:6e6,
+      shadows:q!=='low',shadowSize:q==='ultra'?4096:q==='high'?2048:1024,bloom:hi,gname};
   renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;
   renderer.shadowMap.enabled=R3.shadows;renderer.shadowMap.type=THREE.PCFShadowMap;
   renderer.setClearColor(0x10150b,1);
@@ -6098,7 +6129,8 @@ function resize(){
   if(!R3)return;
   const r=cv.getBoundingClientRect();
   R3.cssW=Math.max(1,r.width);R3.cssH=Math.max(1,r.height);
-  DPR=Math.min(R3.dprMax,window.devicePixelRatio||1);
+  DPR=Math.min(R3.dprMax,window.devicePixelRatio||1)*R3.scale;
+  DPR=Math.max(0.5,Math.min(DPR,Math.sqrt(R3.maxPx/(R3.cssW*R3.cssH))));
   renderer.setPixelRatio(DPR);renderer.setSize(R3.cssW,R3.cssH,false);
   if(composer){composer.setPixelRatio(DPR);composer.setSize(R3.cssW,R3.cssH);R3.bloomPass.resolution.set(R3.cssW*DPR/2,R3.cssH*DPR/2);}
   camera.aspect=R3.cssW/R3.cssH;camera.updateProjectionMatrix();

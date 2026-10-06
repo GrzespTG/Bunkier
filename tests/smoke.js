@@ -17,6 +17,7 @@ const check = (ok, msg) => { console.log((ok ? 'OK   ' : 'BŁĄD ') + msg); if (
     check(await page.evaluate(() => typeof G === 'object' && !NO_GL), `[${side}] gra i WebGL się ładują`);
     await page.evaluate(s => { ST.side = s; start(); }, side);
     await page.waitForTimeout(300);
+    check(await page.evaluate(() => !!document.querySelector('#gfxSeg') && typeof adaptRes === 'function' && typeof R3.scale === 'number'), `[${side}] ustawienia grafiki i skalowanie rozdzielczości są dostępne`);
     // układ: mapa na cały ekran, menu rozwijane z przycisków
     const lay = await page.evaluate(() => ({ cw: cv.clientWidth, ch: cv.clientHeight, w: innerWidth, h: innerHeight }));
     check(lay.cw === lay.w && lay.ch === lay.h, `[${side}] mapa zajmuje cały ekran (${lay.cw}x${lay.ch})`);
