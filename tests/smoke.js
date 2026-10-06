@@ -17,6 +17,16 @@ const check = (ok, msg) => { console.log((ok ? 'OK   ' : 'BŁĄD ') + msg); if (
     check(await page.evaluate(() => typeof G === 'object' && !NO_GL), `[${side}] gra i WebGL się ładują`);
     await page.evaluate(s => { ST.side = s; start(); }, side);
     await page.waitForTimeout(300);
+    // układ: mapa na cały ekran, menu rozwijane z przycisków
+    const lay = await page.evaluate(() => ({ cw: cv.clientWidth, ch: cv.clientHeight, w: innerWidth, h: innerHeight }));
+    check(lay.cw === lay.w && lay.ch === lay.h, `[${side}] mapa zajmuje cały ekran (${lay.cw}x${lay.ch})`);
+    await page.click('#tBuild');
+    check(await page.evaluate(() => !$('#popB').hidden && $('#popU').hidden), `[${side}] przycisk Budowa rozwija menu budynków`);
+    await page.click('#tProd');
+    check(await page.evaluate(() => $('#popB').hidden && !$('#popU').hidden), `[${side}] przycisk Produkcja rozwija menu jednostek`);
+    await page.keyboard.press('Tab'); await page.keyboard.press('Tab');
+    await page.keyboard.press('Tab'); await page.keyboard.press('Tab'); // cykl: Budowa → Produkcja → zwinięte
+    check(await page.evaluate(() => $('#popB').hidden && $('#popU').hidden), `[${side}] Tab zwija menu po pełnym cyklu`);
     // sterowanie
     for (const k of ['q', 'f', 'h', 'z', 'Escape', 'b', 'Home', ' ', '1', 'x']) { await page.keyboard.press(k); await page.waitForTimeout(40); }
     await page.mouse.click(400, 300); await page.mouse.click(400, 300, { button: 'right' });

@@ -15,6 +15,7 @@ Prosta strategia czasu rzeczywistego (RTS) w klimacie klasycznych gier typu Red 
 - **Jednostki:** Zwiadowca, Wyrzutnia SAM, Mamut, Śmigłowiec bojowy, Niszczyciel.
 - **Budynki:** Bunkier, Wieża SAM, Warsztat, Centrum Badań.
 - **Super bronie:** Zenit (COD, uderzenie orbitalne) i Pożoga (BF, rakieta napalmowa). Wróg też ich używa, a koło celu widać na mapie i minimapie.
+- **Interfejs:** mapa na cały ekran, minimapa w rogu, menu Budowa i Produkcja rozwijane z przycisków (Tab przełącza), karta zaznaczenia pojawia się tylko, gdy coś jest zaznaczone.
 - **Sterowanie:** grupy Ctrl+1…9, atak w marszu (F), utrzymanie pozycji (H), super broń (Z), skok do bazy (B), skok do alarmu (Spacja), Shift dodaje do zaznaczenia, środkowy przycisk przesuwa mapę.
 - **Sztuczna inteligencja:** wróg planuje rozwój, wysyła różne typy jednostek, rajdy zwiadowców, lotnictwo, odpiera ataki i odpala super broń.
 - **Grafika i dźwięk:** nowe modele, dym uszkodzonych jednostek, wstrząs ekranu, nowe efekty dźwiękowe.
