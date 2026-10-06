@@ -179,6 +179,7 @@ button:focus-visible{outline:2px solid var(--brass2);outline-offset:2px}
       <div class="brand">B.U.N.K.I.E.R.</div>
       <div class="stat"><span class="lab">Stal</span><span class="val" id="hStal">0</span></div>
       <div class="stat"><span class="lab">Paliwo</span><span class="val" id="hFuel">0</span><span class="lab" id="hFuelRate" title="Przychód paliwa z Rafinerii i Sztabu"></span><span class="fuelbar"><i id="hFuelBar"></i></span></div>
+      <div class="stat" title="Energia: produkcja / zużycie budynków"><span class="lab">Energia</span><span class="val" id="hPow">0/0</span></div>
       <div class="stat"><span class="lab">Czas</span><span class="val" id="hTime">0:00</span></div>
       <div class="stat"><span class="lab" id="hFps" title="Klatki na sekundę · skala rozdzielczości (Auto dopasowuje ją do płynności)"></span></div>
       <div class="sp"></div>
@@ -4830,8 +4831,12 @@ const BDEF={
   swb:{name:'Pożoga',cost:3000,hp:1400,w:3,h:3,time:30,sight:6,req:'lab',max:1,charge:260,sw:'napalm',swR:5,swDmg:760,
     desc:'Super broń BF: taktyczna rakieta. Po wybuchu zostawia pole ognia, które pali wszystko przez 10 s. Ładuje się 4,5 min.'}
 };
+BDEF.pow={name:'Elektrownia',cost:500,hp:800,w:2,h:2,time:12,sight:5,pw:100,desc:'Zasila budynki (+100 energii). Bez prądu produkcja, ładowanie super broni i wieże działają wolniej. Stawiaj kilka.'};
+BDEF.hq.pw=30;
+const USE={ref:10,fac:25,air:25,yard:15,tow:5,aat:10,rep:15,lab:30,swc:50,swb:50};for(const k in USE)BDEF[k].use=USE[k];
 BDEF.tow.up={cost:500,time:8};
 BDEF.tow2={name:'Wieża rakietowa',cost:0,hp:800,w:1,h:1,time:10,sight:8,range:8.5,dmg:55,cd:2.2,splash:1.0,rocket:true,air:true,desc:'Rakiety dalekiego zasięgu z obrażeniami obszarowymi. Trafiają też samoloty.'};
+BDEF.tow2.use=10;
 const UDEF={
   harv:{name:'Zbieracz',from:'hq',cost:400,time:9,hp:320,speed:42,fuel:120,burn:0.9,kind:'g',sight:4,desc:'Zbiera rudę i wozi ją do bazy.'},
   tanker:{name:'Cysterna',from:'hq',cost:300,time:7,hp:220,speed:56,fuel:150,burn:0.7,kind:'g',sight:4,cargo:220,desc:'Sama dowozi paliwo do pojazdów w polu.'},
@@ -5340,8 +5345,13 @@ function spawnFrom(b,type){
   else if(type!=='harv'&&type!=='tanker'){const a=u.ang;pathTo(u,u.x+Math.cos(a)*T*2.5,u.y+Math.sin(a)*T*2.5);}
   return u;
 }
+function calcPower(){
+  G.pw=[0,1].map(team=>{let p=0,u=0;for(const b of G.buildings){if(b.dead||b.team!==team||!b.built)continue;p+=b.d.pw||0;u+=b.d.use||0;}
+    return{p,u,f:u>p?Math.max(0.3,p/u):1};});
+}
 function updBuilding(b,dt){
   if(b.hitT>0)b.hitT-=dt;
+  const pf=G.pw?G.pw[b.team].f:1;
   if(!b.built){let k=1;
     if(b.needB){const n=G.units.filter(u=>!u.dead&&u.type==='dozer'&&u.team===b.team&&dist(u,b)<b.rad+T*2.6).length;b.waitB=!n;if(!n)return;k=1+0.5*(n-1);}
     const dtb=dt*k;b.bprog+=dtb;b.hp=Math.min(b.d.hp,b.hp+b.d.hp*0.9*dtb/b.d.time);
@@ -5351,14 +5361,14 @@ function updBuilding(b,dt){
   if(b.type==='hq')R.fuel=Math.min(3000,R.fuel+0.7*dt);
   if(b.type==='ref')R.fuel=Math.min(3000,R.fuel+2.5*dt);
   if(b.d.sw&&!b.ready){
-    b.charge=Math.min(b.d.charge,(b.charge||0)+dt);
+    b.charge=Math.min(b.d.charge,(b.charge||0)+dt*pf);
     if(b.charge>=b.d.charge){b.ready=true;b.readyAt=G.time;
       if(b.team===0){msg(b.d.name+': super broń gotowa! Klawisz Z albo przycisk u góry.','swr',1);SFX.ui('swready');}
       else msg('Uwaga: wróg ma gotową super broń!','swe',60,true);}
   }
-  if(b.queue.length){b.prog+=dt;const ud=UDEF[b.queue[0]];
+  if(b.queue.length){b.prog+=dt*pf;const ud=UDEF[b.queue[0]];
     if(b.prog>=ud.time){if(spawnFrom(b,b.queue[0])){b.queue.shift();b.prog=0;if(b.team===0)msg(ud.name+' gotowy do działania.','rdy'+ud.name,4);}else b.prog=ud.time;}}
-  if(b.d.dmg){b.cd-=dt;b.acq=(b.acq||0)-dt;
+  if(b.d.dmg){b.cd-=dt*pf;b.acq=(b.acq||0)-dt;
     if(!b.tgt||b.tgt.dead||rangeTo(b,b.tgt)>b.d.range*T||!canHit(b,b.tgt)){if(b.acq<=0){b.acq=.3;b.tgt=acquire(b,b.d.range,true);}}
     if(b.tgt&&!b.tgt.dead){const a=Math.atan2(b.tgt.y-b.y,b.tgt.x-b.x);b.ta=turn(b.ta,a,dt*6);if(b.cd<=0){fire(b,b.tgt);b.cd=b.d.cd;}}}
 }
@@ -5398,8 +5408,8 @@ function place(team,type,tx,ty,builder){
   if(R.stal<d.cost){if(team===0)msg('Za mało stali.','ns',2,true);return false;}
   const dozers=G.units.filter(u=>!u.dead&&u.team===team&&u.type==='dozer');
   if(!dozers.length){if(team===0)msg('Do budowy potrzebny jest '+DZ+'. Zamów go w Sztabie.','nodz',3,true);return false;}
-  if(!canPlace(team,type,tx,ty)&&!(team===0&&canPlace(team,type,tx,ty,true))){
-    if(team===0)msg(d.water?'Stocznię trzeba postawić przy wodzie.':'Tu nie można budować (zajęte, nieodkryte albo za blisko wroga).','np',2,true);return false;}
+  if(!canPlace(team,type,tx,ty)){
+    if(team===0)msg(d.water?'Stocznię trzeba postawić przy wodzie.':'Tu nie można budować: miejsce zajęte, nieodkryte albo za daleko od Twoich budynków (limit ok. 7 pól).','np',2,true);return false;}
   R.stal-=d.cost;const nb=addB(team,type,tx,ty,false);nb.needB=true;if(team===0)SFX.at('build',nb.x,nb.y);
   let bd=builder&&!builder.dead&&builder.team===team?builder:null;
   if(!bd){let best=1e9;for(const u of dozers){if(u.job&&u.job.type==='build'&&!u.job.b.dead&&!u.job.b.built)continue;const dd=dist(u,nb);if(dd<best){best=dd;bd=u;}}}
@@ -5420,7 +5430,7 @@ function queueUnit(team,type,prefer){
 }
 
 /* ---------- SI PRZECIWNIKA ---------- */
-const AIPLAN=[['fac',4],['tow',45],['bun',200],['tow',150],['ref',230],['air','A'],['lab','L'],['fac',420],['rep',360],['aat','P'],['tow',480],['sw','S'],['bun',560],['tow',600],['aat','P2']];
+const AIPLAN=[['pow',2],['fac',4],['tow',45],['bun',200],['tow',150],['ref',230],['air','A'],['lab','L'],['pow',300],['fac',420],['rep',360],['aat','P'],['tow',480],['sw','S'],['bun',560],['pow',700],['tow',600],['aat','P2']];
 function aiTick(){
   const R=G.res[1],D=G.diff;
   const mine=G.buildings.filter(b=>!b.dead&&b.team===1);
@@ -5573,6 +5583,7 @@ function splashAt(p,tx,ty){
 /* ---------- PĘTLA ---------- */
 function update(dt){
   G.time+=dt;
+  G.pwT=(G.pwT||0)-dt;if(G.pwT<=0||!G.pw){G.pwT=.5;calcPower();}
   for(const b of G.buildings)if(!b.dead)updBuilding(b,dt);
   for(const u of G.units)if(!u.dead)updUnit(u,dt);
   separate();stations(dt);
@@ -5793,7 +5804,7 @@ function groupKey(n,save){
 const btnB={},btnU={};
 function buildPanel(){
   const gB=$('#gB'),gU=$('#gU');gB.innerHTML='';gU.innerHTML='';for(const k in btnB)delete btnB[k];for(const k in btnU)delete btnU[k];
-  for(const t of['ref','fac','tow','bun','aat','rep','lab','yard','air',swTypeFor(0)]){const d=BDEF[t];const el=document.createElement('button');el.className='bu';el.title=d.name+' — '+d.desc+(d.req?' (wymaga: '+reqName(d)+')':'');
+  for(const t of['pow','ref','fac','tow','bun','aat','rep','lab','yard','air',swTypeFor(0)]){const d=BDEF[t];const el=document.createElement('button');el.className='bu';el.title=d.name+' — '+d.desc+(d.req?' (wymaga: '+reqName(d)+')':'');
     el.innerHTML=`<img alt="" src="${makeIcon(t,true)}"><span class="n">${d.name}</span><span class="c">${d.cost} stali</span>`;
     el.onclick=()=>{if(ST.mode!=='play')return;if(G.placing===t){G.placing=null;G.ghost=null;}else{if(d.req&&!hasB(0,d.req)){msg('Najpierw zbuduj: '+reqName(d)+'.','rq'+t,2,true);return;}if(d.max&&G.buildings.some(b=>!b.dead&&b.team===0&&b.type===t)){msg(d.name+': można mieć tylko jeden.','mx'+t,2,true);return;}if(G.res[0].stal<d.cost){msg('Za mało stali.','ns',2,true);return;}G.amode=false;G.targeting=false;updModeUI();G.placing=t;G.ghost=null;if(!G.sel.some(u=>u.type==='dozer'))setSel([]);msg((d.water?'Wskaż miejsce przy wodzie. ':'Wskaż miejsce budowy. ')+'Przyjedzie '+UDEF.dozer.name+'.','pl',3);}updPlacingUI();};
     gB.appendChild(el);btnB[t]=el;}
@@ -5820,6 +5831,7 @@ function updPanel(){
   if(!G)return;const R=G.res[0];
   $('#hStal').textContent=Math.floor(R.stal);$('#hFuel').textContent=Math.floor(R.fuel);$('#hFuelBar').style.width=(R.fuel/3000*100)+'%';$('#hTime').textContent=fmtT(G.time);
   let fr=0;for(const b of G.buildings)if(b.team===0&&b.built){if(b.type==='hq')fr+=0.7;if(b.type==='ref')fr+=2.5;}$('#hFuelRate').textContent='+'+fr.toFixed(1)+'/s';
+  if(G.pw){const w=G.pw[0],e=$('#hPow');e.textContent=w.p+'/'+w.u;e.style.color=w.u>w.p?'#e0604a':'';}
   for(const t in btnB){const d=BDEF[t];btnB[t].classList.toggle('dis',R.stal<d.cost||!!(d.req&&!hasB(0,d.req))||!!(d.max&&G.buildings.some(b=>!b.dead&&b.team===0&&b.type===t)));}
   {const sw=swOf(0),bsw=$('#bSW');if(bsw){bsw.hidden=!sw;if(sw){bsw.classList.toggle('ready',!!sw.ready);bsw.textContent=sw.ready?sw.d.name+': GOTOWA (Z)':sw.d.name+' '+Math.floor(sw.charge/sw.d.charge*100)+'%';}}}
   for(const t in btnU){const d=UDEF[t],el=btnU[t];const bs=G.buildings.filter(b=>b.team===0&&b.type===d.from&&b.built);
@@ -6002,7 +6014,7 @@ let TG={W:0,H:0,hg:null};
 let fogTex=null, fogBigC=null, fogBigX=null, fogDirty=true;
 const fogUni={value:null}, fogSizeUni={value:new THREE.Vector2(MW*T,MH*T)}, timeUni={value:0};
 let NO_GL=false;
-const BH={hq:26,ref:42,fac:34,air:32,yard:34,tow:20,bun:22,aat:30,rep:34,lab:30,swc:62,swb:72,tow2:24};   // wysokości budynków (do wybierania myszą)
+const BH={hq:26,ref:42,fac:34,air:32,yard:34,tow:20,bun:22,pow:34,aat:30,rep:34,lab:30,swc:62,swb:72,tow2:24};   // wysokości budynków (do wybierania myszą)
 
 const sstep=(a,b,x)=>{const t=cl((x-a)/(b-a),0,1);return t*t*(3-2*t);};
 const lerp=(a,b,t)=>a+(b-a)*t;
@@ -6951,6 +6963,18 @@ function labModel(team){
   const dp=pivot('spin',-8,21.5,-6,dish,team);dp.userData.spin=1.1;root.add(dp);
   return root;
 }
+function powModel(team){
+  const root=new THREE.Group(),W=64,D=64,b=new MB();
+  slab(b,W,D,2.5);
+  b.box('concrete',50,14,22,0,2.5,12);b.box('team',50.6,1.6,22.6,0,14.5,12);b.box('dark',14,9,0.8,-14,2.5,23.4);
+  b.cyl('concrete',7,10,30,-14,2.5,-14,16);b.cyl('dark',7.4,7.4,1.5,-14,32.5,-14,16);
+  b.cyl('concrete',7,10,30,14,2.5,-14,16);b.cyl('dark',7.4,7.4,1.5,14,32.5,-14,16);
+  b.cyl('steel',2,2.4,40,0,2.5,4,10);b.cyl('hazard',2.2,2.2,3,0,36,4,10);
+  b.box('hazard',10,6,10,24,2.5,10);b.box('steel',2,16,2,-26,2.5,-24);b.box('lamp',3,1,3,-26,18.5,-24);
+  sandbags(b,0,28,5,0,-4.4);
+  root.add(b.build(team));
+  return root;
+}
 function repModel(team){
   const root=new THREE.Group(),W=96,D=64,b=new MB();
   slab(b,W,D,2.5);
@@ -7062,7 +7086,7 @@ function unitTpl(type,team){
 }
 function bldTpl(type,team){
   const k=type+team;if(TPL.b[k])return TPL.b[k];
-  const f={hq:hqModel,ref:refModel,fac:facModel,air:airModel,yard:yardModel,tow:towModel,tow2:t=>towModel(t,true),bun:bunModel,aat:aatModel,rep:repModel,lab:labModel,swc:swcModel,swb:swbModel}[type];
+  const f={hq:hqModel,ref:refModel,fac:facModel,air:airModel,yard:yardModel,tow:towModel,tow2:t=>towModel(t,true),bun:bunModel,aat:aatModel,rep:repModel,pow:powModel,lab:labModel,swc:swcModel,swb:swbModel}[type];
   return TPL.b[k]=f(team);
 }
 
@@ -7432,7 +7456,7 @@ function syncSel(){
 function syncGhost(){
   const gp=POOL.ghostPlane;
   if(!(G.placing&&G.ghost&&!G.reveal)){gp.visible=false;if(POOL.ghost)POOL.ghost.obj.visible=false;return;}
-  const d=BDEF[G.placing],tx=G.ghost[0],ty=G.ghost[1],ok=canPlace(0,G.placing,tx,ty)||canPlace(0,G.placing,tx,ty,true);
+  const d=BDEF[G.placing],tx=G.ghost[0],ty=G.ghost[1],ok=canPlace(0,G.placing,tx,ty);
   if(!POOL.ghost||POOL.ghost.type!==G.placing){
     if(POOL.ghost)scene.remove(POOL.ghost.obj);
     const obj=bldTpl(G.placing,0).clone(true);

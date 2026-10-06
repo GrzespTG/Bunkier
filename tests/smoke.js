@@ -35,21 +35,30 @@ const check = (ok, msg) => { console.log((ok ? 'OK   ' : 'BŁĄD ') + msg); if (
     const r = await page.evaluate(() => {
       G.res[0].stal = 99999;
       const hq = G.buildings.find(b => b.team === 0 && b.type === 'hq'), built = [];
-      for (const t of ['ref', 'fac', 'bun', 'aat', 'rep', 'lab', 'air', swTypeFor(0)]) {
+      for (const t of ['pow', 'ref', 'fac', 'bun', 'aat', 'rep', 'lab', 'air', swTypeFor(0)]) {
         let ok = false;
         for (let r = 4; r < 14 && !ok; r++) for (let a = 0; a < 16 && !ok; a++) {
           const tx = Math.round(hq.tx + Math.cos(a / 16 * 6.283) * r), ty = Math.round(hq.ty + Math.sin(a / 16 * 6.283) * r);
           if (canPlace(0, t, tx, ty)) { const b = addB(0, t, tx, ty, true); b.built = true; b.needB = false; ok = true; built.push(t); }
         }
       }
+      calcPower(); const pwOk = G.pw[0].p >= 130, pwUse = G.pw[0].u;
+      // limit odległości budowy: daleko od budynków nie wolno
+      const far = canPlace(0, 'tow', Math.min(MW - 3, hq.tx + 30), hq.ty);
+      // deficyt prądu spowalnia
+      const fac = G.buildings.find(b => b.team === 0 && b.type === 'fac'); const pw0 = G.buildings.find(b => b.team === 0 && b.type === 'pow');
+      pw0.dead = true; calcPower(); const lowF = G.pw[0].f; pw0.dead = false; calcPower();
       for (let i = 0; i < 1200; i++) update(0.05);
       const sw = G.buildings.find(b => b.team === 0 && b.d.sw), e = G.buildings.find(b => b.team === 1 && b.type === 'hq');
       let fired = false, hp0 = e.hp;
       if (sw) { sw.ready = true; sw.charge = sw.d.charge; fired = fireSW(0, e.x, e.y); }
       for (let i = 0; i < 400; i++) update(0.05);
-      return { built: built.length, fired, hpDrop: hp0 - e.hp, enemyUnits: G.units.filter(u => u.team === 1).length, time: G.time | 0 };
+      return { pwOk, pwUse, far, lowF, built: built.length, fired, hpDrop: hp0 - e.hp, enemyUnits: G.units.filter(u => u.team === 1).length, time: G.time | 0 };
     });
-    check(r.built === 8, `[${side}] zbudowano 8 budynków (jest ${r.built})`);
+    check(r.built === 9, `[${side}] zbudowano 9 budynków (jest ${r.built})`);
+    check(r.pwOk && r.pwUse > 0, `[${side}] elektrownia daje energię (zużycie ${r.pwUse})`);
+    check(!r.far, `[${side}] nie da się budować daleko od własnych budynków`);
+    check(r.lowF < 1, `[${side}] deficyt prądu spowalnia (x${r.lowF.toFixed(2)})`);
     check(r.fired, `[${side}] super broń wystrzeliła`);
     check(r.hpDrop > 200, `[${side}] super broń zadała obrażenia (${Math.round(r.hpDrop)} HP)`);
     check(r.enemyUnits >= 5, `[${side}] AI buduje armię (${r.enemyUnits} jednostek)`);
