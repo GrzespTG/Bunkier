@@ -58,16 +58,6 @@ const cpos=i=>[PX(CITIES[i].lon),PY(CITIES[i].lat)];
 const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let UI={screen:'menu',tab:'market',sel:null,qty:1,city:null,travel:null,anim:null};
 const app=()=>$('#app');
-let AC=null;
-function snd(k){if(!OPT.sound)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume();
-  const t0=AC.currentTime;const tone=(f,d,type,v,w)=>{const o=AC.createOscillator(),g=AC.createGain();o.type=type||'sine';o.frequency.value=f;g.gain.setValueAtTime(v||.05,t0+(w||0));g.gain.exponentialRampToValueAtTime(.0001,t0+(w||0)+d);o.connect(g);g.connect(AC.destination);o.start(t0+(w||0));o.stop(t0+(w||0)+d+.02);};
-  if(k==='buy'){tone(420,.09,'triangle');tone(560,.1,'triangle',.05,.07);}
-  else if(k==='sell'){tone(740,.08,'sine',.06);tone(1100,.16,'sine',.06,.07);}
-  else if(k==='bad'){tone(160,.3,'sawtooth',.05);tone(110,.35,'sawtooth',.05,.15);}
-  else if(k==='siren'){for(let i=0;i<4;i++)tone(i%2?640:880,.18,'square',.03,i*.2);}
-  else if(k==='go'){tone(220,.2,'triangle',.05);tone(330,.25,'triangle',.05,.15);}
-  else if(k==='tap')tone(600,.04,'sine',.03);
-}catch(e){}}
 function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2200);}
 
 let _scrollKey='',_scrollTop=0;
@@ -86,6 +76,8 @@ function render(){
   if(UI.screen==='game'&&UI.sel&&m1){const s=m1.querySelector('.g.sel');if(s){const mr=m1.getBoundingClientRect(),sr=s.getBoundingClientRect();
     if(sr.bottom>mr.bottom)m1.scrollTop+=Math.min(sr.bottom-mr.bottom+8,sr.top-mr.top-4);}}
   if(UI.screen==='game'&&UI.travel)startAnim();
+  if(UI.screen==='end'&&S&&!S._es){S._es=1;snd(score()>1000?'win':'lose');}
+  syncMusic();
 }
 function menuHTML(){
   const sv=LS.get('db_save',null);
@@ -98,7 +90,8 @@ function menuHTML(){
     <div class="row2"><button class="btn sec" data-act="how">Jak grać</button><button class="btn sec" data-act="scores">Rekordy</button></div>
     <div class="lbl">Długość gry</div>
     <div class="seg">${[60,100,150].map(d=>`<button data-act="days" data-v="${d}" class="${OPT.days===d?'on':''}">${d} dni</button>`).join('')}</div>
-    <div class="row2" style="margin-top:10px"><button class="btn sec sm" data-act="sound">Dźwięk ${OPT.sound?'wł.':'wył.'}</button>
+    ${volHTML()}
+    <div class="row2" style="margin-top:10px">
      <input id="pname" class="btn sec sm" style="color:var(--txt);text-align:center;font-weight:700" maxlength="14" value="${esc(OPT.name)}" aria-label="Twoje imię"></div>
    </div></div></div>`;
 }
@@ -226,11 +219,17 @@ function logHTML(){return `<div class="logl">${S.log.map(l=>`<div class="${l.k}"
 /* --- okna --- */
 function showModal(o){
   const m=$('#modal');
-  m.innerHTML=`<div class="sheet" role="dialog" aria-modal="true"><div class="scene">${scene(o.scene)}</div><h3>${esc(o.title)}</h3><p>${esc(o.text)}</p><div class="opts">${o.opts.map((x,i)=>`<button class="opt ${x.cls||''}" data-act="opt" data-v="${i}"><b>${esc(x.t)}</b>${x.s?`<small>${esc(x.s)}</small>`:''}</button>`).join('')}</div></div>`;
+  m.innerHTML=`<div class="sheet" role="dialog" aria-modal="true"><div class="scene">${scene(o.scene)}</div><h3>${esc(o.title)}</h3>${o.text?`<p>${esc(o.text)}</p>`:''}${o.html||''}<div class="opts">${o.opts.map((x,i)=>`<button class="opt ${x.cls||''}" data-act="opt" data-v="${i}"><b>${esc(x.t)}</b>${x.s?`<small>${esc(x.s)}</small>`:''}</button>`).join('')}</div></div>`;
   m.classList.add('on');m._o=o;
-  if(o.scene==='police')snd('siren');else if(o.scene==='rob'||o.scene==='broken')snd('bad');
+  if(!o.quiet){
+    if(o.scene==='police'){snd('siren');sirenLoop(true);}
+    else if(o.scene==='rob'){snd('rob');snd('shots',1.5);}
+    else if(o.scene==='broken')snd('bad');
+    else if(o.scene==='demon')snd('demon');}
+  if(o.scene!=='police')sirenLoop(false);
+  syncMusic();
 }
-function closeModal(){const m=$('#modal');m.classList.remove('on');m.innerHTML='';m._o=null;}
+function closeModal(){const m=$('#modal');m.classList.remove('on');m.innerHTML='';m._o=null;sirenLoop(false);syncMusic();}
 function nextModal(){
   if(PQ.length){showModal(PQ.shift());return;}
   closeModal();save();
@@ -241,7 +240,9 @@ function pickOpt(i){
   const m=$('#modal'),o=m._o;if(!o)return;
   const r=o.opts[i].fn();
   if(r==='__nomoney'){toast('Nie stać Cię na to.');return;}
-  if(r){showModal({scene:o.scene,title:'Co się stało',text:r,opts:[{t:'Dalej',cls:'go',fn:()=>null}]});return;}
+  if(r){const lr=r.toLowerCase();
+    if(lr.startsWith('areszt'))snd('arrest');else if(lr.indexOf('łapówk')>=0||lr.indexOf('policjant')>=0)snd('bribe');else if(lr.startsWith('zgubiłeś'))snd('escape');
+    showModal({scene:o.scene==='police'?'cash':o.scene,quiet:true,title:'Co się stało',text:r,opts:[{t:'Dalej',cls:'go',fn:()=>null}]});return;}
   nextModal();
 }
 
@@ -279,9 +280,10 @@ document.addEventListener('click',e=>{
    case 'scores':UI.screen='scores';render();break;
    case 'menu':UI.screen='menu';render();break;
    case 'days':OPT.days=+v;LS.set('db_opt',OPT);render();break;
-   case 'sound':OPT.sound=!OPT.sound;LS.set('db_opt',OPT);render();snd('tap');break;
+   case 'sound':OPT.sound=!OPT.sound;LS.set('db_opt',OPT);if(OPT.sound)initAudio();applyVol();if(!OPT.sound&&sirenSrc)sirenLoop(false);const nb=$('#snbtn');if(nb)nb.textContent='Dźwięk '+(OPT.sound?'wł.':'wył.');if(UI.screen==='menu')render();syncMusic();snd('tap');break;
    case 'gmenu':showModal({scene:'cash',title:'Menu gry',text:'Dzień '+S.day+' z '+S.maxDays+'. Wynik teraz: '+fmt(score())+'.',opts:[
       {t:'Wróć do gry',cls:'go',fn:()=>null},
+      {t:'Dźwięk i muzyka',s:'Głośność muzyki i efektów.',fn:()=>{setTimeout(()=>showModal({scene:'cash',quiet:true,title:'Głośność',text:'',html:volHTML(),opts:[{t:'Gotowe',cls:'go',fn:()=>null}]}),0);return null;}},
       {t:'Zakończ grę i zapisz wynik',s:'Liczy się gotówka plus bank minus dług.',cls:'risk',fn:()=>{endGame('quit');return null;}},
       {t:'Wyjdź do menu',s:'Gra zostanie zapisana, możesz ją kontynuować.',fn:()=>{save();UI.screen='menu';return null;}}]});break;
    case 'opt':pickOpt(+v);break;

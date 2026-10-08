@@ -64,7 +64,7 @@ const check = (ok, msg) => { console.log((ok ? 'OK   ' : 'BŁĄD ') + msg); if (
     await page.click('[data-act=opt]'); await page.waitForTimeout(100);
     // koniec gry i rekordy
     await page.evaluate(() => { DBG.S.day = DBG.S.maxDays; DBG.S.cash = 123456; });
-    await page.click('[data-act=gmenu]'); await page.click('[data-act=opt][data-v="1"]'); await page.waitForTimeout(250);
+    await page.click('[data-act=gmenu]'); await page.click('[data-act=opt][data-v="2"]'); await page.waitForTimeout(250);
     check(await page.evaluate(() => /Koniec gry|Czas minął/.test(document.body.innerText) && /zł/.test(document.querySelector('.endn').textContent)), t('ekran końcowy z wynikiem'));
     check(await page.evaluate(() => JSON.parse(localStorage.getItem('db_scores') || '[]').length >= 1), t('wynik zapisany w rekordach'));
     await page.click('[data-act=menu]'); await page.click('[data-act=scores]');
