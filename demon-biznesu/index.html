@@ -213,21 +213,22 @@ const GOODS=[
  {id:'cigs',depth:40,n:'Papierosy bez akcyzy',base:270,vol:.20,c:1,risk:.15},
  {id:'fake',depth:25,n:'Podróbki znanych marek',base:440,vol:.22,c:1,risk:.25},
  {id:'money',depth:15,n:'Fałszywe banknoty',base:950,vol:.26,c:1,risk:.35},
- {id:'drugs',depth:10,n:'Narkotyki',base:1900,vol:.30,c:1,risk:.5}
+ {id:'drugs',depth:10,n:'Narkotyki',base:1900,vol:.30,c:1,risk:.5},
+ {id:'guns',depth:6,n:'Broń z przemytu',base:4800,vol:.34,c:1,risk:1.1}
 ];
 const GI={};GOODS.forEach((g,i)=>GI[g.id]=i);
 const CITIES=[
- {id:'war',n:'Warszawa',lon:21.01,lat:52.23,pol:1.0,prod:[],dem:['elec','clothes','vodka'],cb:{money:'d',drugs:'d',fake:'d'},a:'e'},
- {id:'kra',n:'Kraków',lon:19.94,lat:50.06,pol:.85,prod:['clothes'],dem:['vodka','parts'],cb:{drugs:'d',fake:'d',cigs:'d'},a:'e',dy:14},
- {id:'lod',n:'Łódź',lon:19.46,lat:51.76,pol:.7,prod:['clothes','flour'],dem:['elec'],cb:{fake:'c',cigs:'d'},a:'w'},
- {id:'wro',n:'Wrocław',lon:17.04,lat:51.11,pol:.8,prod:['parts'],dem:['coal','sugar'],cb:{drugs:'c',money:'d'},a:'w'},
- {id:'poz',n:'Poznań',lon:16.93,lat:52.41,pol:.75,prod:['sugar','flour'],dem:['parts','elec'],cb:{money:'c',cigs:'d'},a:'w'},
- {id:'gda',n:'Gdańsk',lon:18.65,lat:54.35,pol:.8,prod:['elec'],dem:['coal','flour'],cb:{drugs:'c',fake:'c'},a:'w'},
- {id:'szc',n:'Szczecin',lon:14.55,lat:53.43,pol:.65,prod:['parts'],dem:['sugar','vodka'],cb:{cigs:'c',drugs:'c',money:'d'},a:'e'},
- {id:'kat',n:'Katowice',lon:19.02,lat:50.26,pol:.9,prod:['coal'],dem:['clothes','sugar','flour'],cb:{money:'c',cigs:'d',drugs:'d'},a:'w',dy:-6},
- {id:'lub',n:'Lublin',lon:22.57,lat:51.25,pol:.6,prod:['flour','sugar'],dem:['parts','elec'],cb:{cigs:'c',fake:'d'},a:'w'},
- {id:'bia',n:'Białystok',lon:23.16,lat:53.13,pol:.55,prod:['flour','vodka'],dem:['elec','parts'],cb:{cigs:'c',fake:'c',money:'d'},a:'w'},
- {id:'rze',n:'Rzeszów',lon:22.0,lat:50.04,pol:.55,prod:['parts'],dem:['coal','clothes'],cb:{cigs:'c',drugs:'d'},a:'w'},
+ {id:'war',n:'Warszawa',lon:21.01,lat:52.23,pol:1.0,prod:[],dem:['elec','clothes','vodka'],cb:{guns:'d',money:'d',drugs:'d',fake:'d'},a:'e'},
+ {id:'kra',n:'Kraków',lon:19.94,lat:50.06,pol:.85,prod:['clothes'],dem:['vodka','parts'],cb:{guns:'d',drugs:'d',fake:'d',cigs:'d'},a:'e',dy:14},
+ {id:'lod',n:'Łódź',lon:19.46,lat:51.76,pol:.7,prod:['clothes','flour'],dem:['elec'],cb:{guns:'d',fake:'c',cigs:'d'},a:'w'},
+ {id:'wro',n:'Wrocław',lon:17.04,lat:51.11,pol:.8,prod:['parts'],dem:['coal','sugar'],cb:{guns:'d',drugs:'c',money:'d'},a:'w'},
+ {id:'poz',n:'Poznań',lon:16.93,lat:52.41,pol:.75,prod:['sugar','flour'],dem:['parts','elec'],cb:{guns:'d',money:'c',cigs:'d'},a:'w'},
+ {id:'gda',n:'Gdańsk',lon:18.65,lat:54.35,pol:.8,prod:['elec'],dem:['coal','flour'],cb:{guns:'c',drugs:'c',fake:'c'},a:'w'},
+ {id:'szc',n:'Szczecin',lon:14.55,lat:53.43,pol:.65,prod:['parts'],dem:['sugar','vodka'],cb:{guns:'c',cigs:'c',drugs:'c',money:'d'},a:'e'},
+ {id:'kat',n:'Katowice',lon:19.02,lat:50.26,pol:.9,prod:['coal'],dem:['clothes','sugar','flour'],cb:{guns:'d',money:'c',cigs:'d',drugs:'d'},a:'w',dy:-6},
+ {id:'lub',n:'Lublin',lon:22.57,lat:51.25,pol:.6,prod:['flour','sugar'],dem:['parts','elec'],cb:{guns:'c',cigs:'c',fake:'d'},a:'w'},
+ {id:'bia',n:'Białystok',lon:23.16,lat:53.13,pol:.55,prod:['flour','vodka'],dem:['elec','parts'],cb:{guns:'c',cigs:'c',fake:'c',money:'d'},a:'w'},
+ {id:'rze',n:'Rzeszów',lon:22.0,lat:50.04,pol:.55,prod:['parts'],dem:['coal','clothes'],cb:{guns:'c',cigs:'c',drugs:'d'},a:'w'},
  {id:'byd',n:'Bydgoszcz',lon:18.0,lat:53.12,pol:.6,prod:['sugar'],dem:['vodka','elec'],cb:{fake:'d',money:'d'},a:'e'},
  {id:'ols',n:'Olsztyn',lon:20.48,lat:53.78,pol:.5,prod:['flour'],dem:['clothes','parts'],cb:{cigs:'d',drugs:'d'},a:'e'},
  {id:'kie',n:'Kielce',lon:20.63,lat:50.87,pol:.6,prod:['vodka'],dem:['flour','coal'],cb:{fake:'c',drugs:'d'},a:'e'},
@@ -281,6 +282,7 @@ const sellP=(c,g)=>{const m=mid(c,g);return m==null?null:Math.floor(m*.95);};
 const buyTotal=(c,g,q)=>{const m=mid(c,g);return m==null?null:Math.ceil(m*1.05*(1+impact(g,q)/2))*q;};
 const sellTotal=(c,g,q)=>{const m=mid(c,g);return m==null?null:Math.floor(m*.95*Math.max(.35,1-impact(g,q)/2))*q;};
 const maxBuy=(c,g)=>{const m=mid(c,g);if(m==null)return 0;let lo=0,hi=Math.max(0,cap()-used());while(lo<hi){const x=Math.ceil((lo+hi)/2);if(buyTotal(c,g,x)<=S.cash)lo=x;else hi=x-1;}return lo;};
+function migrate(s){const nG=GOODS.length;s.m.forEach(r=>{while(r.length<nG)r.push(1);});s.prev=s.prev||[];s.prev.forEach(r=>{while(r.length<nG)r.push(null);});s.seen.forEach(r=>{while(r.length<nG)r.push(null);});return s;}
 function recordSeen(c){S.seen[c]=GOODS.map((_,g)=>{const m=mid(c,g);return m==null?null:Math.ceil(m*1.05);});(S.seenDay||(S.seenDay={}))[c]=S.day;}
 function addLog(t,k){S.log.unshift({d:S.day,t,k:k||''});if(S.log.length>60)S.log.pop();}
 function dayTick(){
@@ -443,10 +445,11 @@ const ICON={
  cigs:'<rect x="5" y="29" width="31" height="8" rx="2.5" fill="#f4f7fc"/><rect x="27" y="29" width="9" height="8" fill="#e59b3d"/><path d="M40 28c3-4-3-6 0-10M44 31c3-3-2-5 0-9" stroke="#9fb0cc" fill="none" stroke-width="2" stroke-linecap="round"/><path d="M11 26l-4-6" stroke="#ff5468" stroke-width="2.5" stroke-linecap="round"/>',
  fake:'<path d="M5 24 24 5h18v18L23 42z" fill="#b794f6"/><circle cx="35" cy="12" r="3.2" fill="#14281f"/><text x="22" y="29" font-size="15" font-weight="800" fill="#fff" transform="rotate(-45 22 25)" text-anchor="middle">™</text>',
  money:'<rect x="3" y="12" width="42" height="25" rx="3.5" fill="#3ecf8e"/><circle cx="24" cy="24.5" r="8" fill="#1c8f5c"/><text x="24" y="28.4" text-anchor="middle" font-size="10" font-weight="800" fill="#e8fff4">zł</text><path d="M7 16h6M35 33h6" stroke="#e8fff4" stroke-width="2" stroke-linecap="round"/><path d="m36 10 9 6" stroke="#ff5468" stroke-width="3" stroke-linecap="round"/>',
+ guns:'<path d="M5 18h13l3-3v-4H11l-2-3H5z" fill="#8a97a3"/><path d="M18 15l-2 5h-4l1-5z" fill="#5a6672"/><rect x="6" y="8" width="12" height="3" rx="1" fill="#c9d3dc"/><circle cx="39" cy="10" r="2.5" fill="#a78bfa"/>',
  drugs:'<g transform="rotate(-38 24 24)"><rect x="5" y="15" width="38" height="18" rx="9" fill="#fff"/><path d="M24 15h10a9 9 0 0 1 0 18H24z" fill="#ff5468"/></g><circle cx="12" cy="38" r="2" fill="#a78bfa"/><circle cx="40" cy="10" r="2.5" fill="#a78bfa"/>'
 };
 const icon=(id,sz)=>`<svg viewBox="0 0 48 48"${sz?` width="${sz}" height="${sz}"`:''} aria-hidden="true">${ICON[id]}</svg>`;
-const SHORT={coal:'Węgiel',sugar:'Cukier',flour:'Mąka',vodka:'Wódka',clothes:'Odzież',parts:'Części',elec:'Elektronika',cigs:'Papierosy',fake:'Podróbki',money:'Banknoty',drugs:'Narkotyki'};
+const SHORT={coal:'Węgiel',sugar:'Cukier',flour:'Mąka',vodka:'Wódka',clothes:'Odzież',parts:'Części',elec:'Elektronika',cigs:'Papierosy',fake:'Podróbki',money:'Banknoty',drugs:'Narkotyki',guns:'Broń'};
 
 function guil(){
   let s='<svg viewBox="-200 -200 400 400" aria-hidden="true"><defs><linearGradient id="gg" x1="0" x2="1"><stop offset="0" stop-color="#5be3a0"/><stop offset="1" stop-color="#a78bfa"/></linearGradient></defs><g fill="none" stroke="url(#gg)" stroke-width=".8">';
@@ -538,7 +541,7 @@ function howHTML(){
   <p>Masz ograniczoną liczbę dni, żeby zarobić jak najwięcej. Wynik to gotówka plus konto w banku minus dług.</p>
   <ul><li><b>Rynek.</b> W każdym mieście towary mają inne ceny. Zielona etykieta „Tanio” oznacza dobrą okazję do kupna, a czerwona „Drogo” dobry moment na sprzedaż.</li>
   <li><b>Mapa.</b> Wybierz miasto i jedź. Podróż zajmuje dni i kosztuje paliwo. Po odwiedzeniu miasta zapamiętasz jego ceny, więc planuj trasy.</li>
-  <li><b>Kontrabanda.</b> Papierosy bez akcyzy, podróbki, fałszywe banknoty i narkotyki dają wielkie zyski, ale przy wjeździe do miasta grozi kontrola policji. Im więcej kontrabandy, im czujniejsza policja i im większy poziom alarmu w mieście, tym większe ryzyko.</li>
+  <li><b>Kontrabanda.</b> Papierosy bez akcyzy, podróbki, fałszywe banknoty i narkotyki, a przede wszystkim przemyt broni dają wielkie zyski (broń to najdroższy towar, ale i najwyższe ryzyko), ale przy wjeździe do miasta grozi kontrola policji. Im więcej kontrabandy, im czujniejsza policja i im większy poziom alarmu w mieście, tym większe ryzyko.</li>
   <li><b>Gdy zatrzyma Cię policja.</b> Możesz dać łapówkę, uciekać albo się poddać. Areszt oznacza utratę całej kontrabandy, 60% gotówki z kieszeni i trzy dni. Pieniądze w banku są bezpieczne.</li>
   <li><b>Pojazdy.</b> Większy transport zabierze więcej towaru, ale spala więcej paliwa. Sportowe coupé ma małą ładownię, za to najłatwiej uciec nim policji.</li>
   <li><b>Bank i lichwiarz.</b> Konto daje niewielki procent. Dług u lichwiarza rośnie o 2% dziennie, więc spłacaj go przed końcem gry.</li>
@@ -705,7 +708,7 @@ document.addEventListener('click',e=>{
   if(UI.travel&&a!=='opt')return;
   switch(a){
    case 'new':{UI.screen='game';newGame(OPT.days);UI.tab='market';UI.sel=null;UI.qty=1;UI.city=null;snd('go');save();render();break;}
-   case 'cont':{const sv=LS.get('db_save',null);if(sv){S=sv;RND=Math.random;UI.screen='game';UI.tab='market';UI.sel=null;render();}break;}
+   case 'cont':{const sv=LS.get('db_save',null);if(sv){S=migrate(sv);RND=Math.random;UI.screen='game';UI.tab='market';UI.sel=null;render();}break;}
    case 'how':UI.screen='how';render();break;
    case 'scores':UI.screen='scores';render();break;
    case 'menu':UI.screen='menu';render();break;

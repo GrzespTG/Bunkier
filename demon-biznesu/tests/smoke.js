@@ -15,7 +15,7 @@ const check = (ok, msg) => { console.log((ok ? 'OK   ' : 'BŁĄD ') + msg); if (
     const t = s => `[${vp.n}] ${s}`;
     check(await page.evaluate(() => !!document.querySelector('.menu .title') && document.body.scrollWidth <= innerWidth), t('menu się wyświetla, bez przewijania w poziomie'));
     await page.click('[data-act=new]'); await page.waitForTimeout(200);
-    check(await page.evaluate(() => document.querySelectorAll('.g').length === 11), t('rynek pokazuje 11 towarów'));
+    check(await page.evaluate(() => document.querySelectorAll('.g').length === 12), t('rynek pokazuje 12 towarów'));
     check(await page.evaluate(() => document.body.scrollWidth <= innerWidth), t('gra bez przewijania w poziomie'));
     // kup i sprzedaj przez interfejs
     const c0 = await page.evaluate(() => DBG.S.cash);

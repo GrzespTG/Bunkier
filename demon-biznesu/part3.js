@@ -11,10 +11,11 @@ const ICON={
  cigs:'<rect x="5" y="29" width="31" height="8" rx="2.5" fill="#f4f7fc"/><rect x="27" y="29" width="9" height="8" fill="#e59b3d"/><path d="M40 28c3-4-3-6 0-10M44 31c3-3-2-5 0-9" stroke="#9fb0cc" fill="none" stroke-width="2" stroke-linecap="round"/><path d="M11 26l-4-6" stroke="#ff5468" stroke-width="2.5" stroke-linecap="round"/>',
  fake:'<path d="M5 24 24 5h18v18L23 42z" fill="#b794f6"/><circle cx="35" cy="12" r="3.2" fill="#14281f"/><text x="22" y="29" font-size="15" font-weight="800" fill="#fff" transform="rotate(-45 22 25)" text-anchor="middle">™</text>',
  money:'<rect x="3" y="12" width="42" height="25" rx="3.5" fill="#3ecf8e"/><circle cx="24" cy="24.5" r="8" fill="#1c8f5c"/><text x="24" y="28.4" text-anchor="middle" font-size="10" font-weight="800" fill="#e8fff4">zł</text><path d="M7 16h6M35 33h6" stroke="#e8fff4" stroke-width="2" stroke-linecap="round"/><path d="m36 10 9 6" stroke="#ff5468" stroke-width="3" stroke-linecap="round"/>',
+ guns:'<path d="M5 18h13l3-3v-4H11l-2-3H5z" fill="#8a97a3"/><path d="M18 15l-2 5h-4l1-5z" fill="#5a6672"/><rect x="6" y="8" width="12" height="3" rx="1" fill="#c9d3dc"/><circle cx="39" cy="10" r="2.5" fill="#a78bfa"/>',
  drugs:'<g transform="rotate(-38 24 24)"><rect x="5" y="15" width="38" height="18" rx="9" fill="#fff"/><path d="M24 15h10a9 9 0 0 1 0 18H24z" fill="#ff5468"/></g><circle cx="12" cy="38" r="2" fill="#a78bfa"/><circle cx="40" cy="10" r="2.5" fill="#a78bfa"/>'
 };
 const icon=(id,sz)=>`<svg viewBox="0 0 48 48"${sz?` width="${sz}" height="${sz}"`:''} aria-hidden="true">${ICON[id]}</svg>`;
-const SHORT={coal:'Węgiel',sugar:'Cukier',flour:'Mąka',vodka:'Wódka',clothes:'Odzież',parts:'Części',elec:'Elektronika',cigs:'Papierosy',fake:'Podróbki',money:'Banknoty',drugs:'Narkotyki'};
+const SHORT={coal:'Węgiel',sugar:'Cukier',flour:'Mąka',vodka:'Wódka',clothes:'Odzież',parts:'Części',elec:'Elektronika',cigs:'Papierosy',fake:'Podróbki',money:'Banknoty',drugs:'Narkotyki',guns:'Broń'};
 
 function guil(){
   let s='<svg viewBox="-200 -200 400 400" aria-hidden="true"><defs><linearGradient id="gg" x1="0" x2="1"><stop offset="0" stop-color="#5be3a0"/><stop offset="1" stop-color="#a78bfa"/></linearGradient></defs><g fill="none" stroke="url(#gg)" stroke-width=".8">';
@@ -106,7 +107,7 @@ function howHTML(){
   <p>Masz ograniczoną liczbę dni, żeby zarobić jak najwięcej. Wynik to gotówka plus konto w banku minus dług.</p>
   <ul><li><b>Rynek.</b> W każdym mieście towary mają inne ceny. Zielona etykieta „Tanio” oznacza dobrą okazję do kupna, a czerwona „Drogo” dobry moment na sprzedaż.</li>
   <li><b>Mapa.</b> Wybierz miasto i jedź. Podróż zajmuje dni i kosztuje paliwo. Po odwiedzeniu miasta zapamiętasz jego ceny, więc planuj trasy.</li>
-  <li><b>Kontrabanda.</b> Papierosy bez akcyzy, podróbki, fałszywe banknoty i narkotyki dają wielkie zyski, ale przy wjeździe do miasta grozi kontrola policji. Im więcej kontrabandy, im czujniejsza policja i im większy poziom alarmu w mieście, tym większe ryzyko.</li>
+  <li><b>Kontrabanda.</b> Papierosy bez akcyzy, podróbki, fałszywe banknoty i narkotyki, a przede wszystkim przemyt broni dają wielkie zyski (broń to najdroższy towar, ale i najwyższe ryzyko), ale przy wjeździe do miasta grozi kontrola policji. Im więcej kontrabandy, im czujniejsza policja i im większy poziom alarmu w mieście, tym większe ryzyko.</li>
   <li><b>Gdy zatrzyma Cię policja.</b> Możesz dać łapówkę, uciekać albo się poddać. Areszt oznacza utratę całej kontrabandy, 60% gotówki z kieszeni i trzy dni. Pieniądze w banku są bezpieczne.</li>
   <li><b>Pojazdy.</b> Większy transport zabierze więcej towaru, ale spala więcej paliwa. Sportowe coupé ma małą ładownię, za to najłatwiej uciec nim policji.</li>
   <li><b>Bank i lichwiarz.</b> Konto daje niewielki procent. Dług u lichwiarza rośnie o 2% dziennie, więc spłacaj go przed końcem gry.</li>
@@ -273,7 +274,7 @@ document.addEventListener('click',e=>{
   if(UI.travel&&a!=='opt')return;
   switch(a){
    case 'new':{UI.screen='game';newGame(OPT.days);UI.tab='market';UI.sel=null;UI.qty=1;UI.city=null;snd('go');save();render();break;}
-   case 'cont':{const sv=LS.get('db_save',null);if(sv){S=sv;RND=Math.random;UI.screen='game';UI.tab='market';UI.sel=null;render();}break;}
+   case 'cont':{const sv=LS.get('db_save',null);if(sv){S=migrate(sv);RND=Math.random;UI.screen='game';UI.tab='market';UI.sel=null;render();}break;}
    case 'how':UI.screen='how';render();break;
    case 'scores':UI.screen='scores';render();break;
    case 'menu':UI.screen='menu';render();break;
