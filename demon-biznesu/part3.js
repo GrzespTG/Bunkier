@@ -145,11 +145,12 @@ function gameHTML(){
    <nav class="tabbar">${TABS.map(t=>`<button class="tab ${UI.tab===t[0]?'on':''}" data-act="tab" data-v="${t[0]}" ${UI.travel?'disabled':''}><svg viewBox="0 0 24 24">${t[2]}</svg>${t[1]}</button>`).join('')}</nav>`;
 }
 function trendHTML(c,g){const p=S.prev[c][g],m=mid(c,g);if(p==null||m==null)return '';const d=(m/p-1)*100;
-  if(Math.abs(d)<.5)return '<small class="fl">bez zmian</small>';return `<small class="${d>0?'up':'dn'}">${d>0?'▲':'▼'} ${Math.abs(d).toFixed(0)}%</small>`;}
+  if(Math.abs(d)<.5)return '<small class="fl">bez zmian od wczoraj</small>';return `<small class="${d>0?'tu':'td'}">${d>0?'▲ drożeje':'▼ tanieje'} ${Math.abs(d).toFixed(0)}% <i>od wczoraj</i></small>`;}
 function goodRow(g){
   const G=GOODS[g],id=G.id,bp=buyP(S.city,g),sp=sellP(S.city,g),it=S.inv[id],sel=UI.sel===id;
   const ratio=bp==null?1:mid(S.city,g)/G.base;
-  const tag=bp==null?'':ratio<=.8?'<span class="pill cheap">Tanio</span>':ratio>=1.3?'<span class="pill dear">Drogo</span>':'';
+  const pc=Math.round(Math.abs(ratio-1)*100);
+  const tag=bp==null?'':ratio<=.8?`<span class="pill cheap">Tanio −${pc}% </span>`:ratio>=1.3?`<span class="pill dear">Drogo +${pc}% </span>`:'';
   let owned='';
   if(it){const diff=sp==null?null:sp-it.avg;owned=`<span>Masz ${it.q} szt. · śr. ${fnum(it.avg)} zł</span>${diff==null?'':`<span class="${diff>=0?'up':'dn'}">${diff>=0?'+':''}${fnum(diff)} zł/szt.</span>`}`;}
   else owned=`<span>${bp==null?'Brak popytu i podaży w tym mieście':'Brak w ładowni'}</span>`;
@@ -169,7 +170,7 @@ function goodRow(g){
 function marketHTML(){
   let h='';
   if(S.news)h+=`<div class="news"><svg viewBox="0 0 24 24"><path d="M5 5h14v14H5zM8 9h8M8 12h8M8 15h5" fill="none" stroke="currentColor" stroke-width="2"/></svg><div>${esc(S.news)}</div></div>`;
-  h+='<div class="sect">Towary legalne</div>';
+  h+='<div class="legend"><b>Jak czytać ceny:</b> <span class="pill cheap">Tanio</span>/<span class="pill dear">Drogo</span> = cena względem średniej krajowej (np. „Tanio −22%” to 22% poniżej średniej) (kupuj tanio, sprzedawaj drogo). <span class="tu">▲</span>/<span class="td">▼</span> = zmiana ceny od wczoraj. Towar może być tani, a mimo to drożeć.</div><div class="sect">Towary legalne</div>';
   GOODS.forEach((G,g)=>{if(!G.c)h+=goodRow(g);});
   h+=`<div class="sect cb">Kontrabanda · alarm policji w mieście ${Math.round(S.heat[S.city])}%</div>`;
   GOODS.forEach((G,g)=>{if(G.c)h+=goodRow(g);});
@@ -192,7 +193,7 @@ function mapHTML(){
   else if(sc==null)info='<div class="card cinfo"><h3>Dokąd jedziesz?</h3><div class="sub">Stuknij miasto na mapie, żeby zobaczyć koszt podróży i ostatnie znane ceny.</div></div>';
   else {const C=CITIES[sc];const same=sc===cur;
     let chips='';
-    if(S.visited[sc]){chips=`<div class="chips">${GOODS.map((G,g)=>{const p=S.seen[sc][g];if(p==null)return '';const r=p/G.base;return `<div class="chip ${r<=.8?'c':r>=1.3?'d':''}"><small>${SHORT[G.id]}</small><b class="num">${fnum(p)} zł</b></div>`;}).join('')}</div><div class="sub">Ceny z ostatniej wizyty. Mogły się zmienić.</div>`;}
+    if(S.visited[sc]){const ago=S.day-(S.seenDay&&S.seenDay[sc]||S.day);chips=`<div class="chips">${GOODS.map((G,g)=>{const p=S.seen[sc][g];if(p==null)return '';const r=p/(G.base*1.05);return `<div class="chip ${r<=.8?'c':r>=1.3?'d':''}"><small>${SHORT[G.id]}</small><b class="num">~${fnum(p)} zł</b></div>`;}).join('')}</div><div class="sub">Ostatnie znane ceny kupna z dnia ${S.seenDay&&S.seenDay[sc]||'?'} (${ago?ago+' dni temu':'dziś'}). Po podróży ceny zwykle się zmieniają, przeciętnie o kilka–kilkanaście procent, więc traktuj je jako orientacyjne.</div>`;}
     else chips='<div class="sub" style="margin:8px 0">Nie byłeś tu jeszcze. Ceny poznasz na miejscu.</div>';
     let go='';
     if(!same){const p=travelPlan(sc);const late=!p.err&&S.day+p.days>S.maxDays;

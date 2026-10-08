@@ -90,7 +90,7 @@ const sellP=(c,g)=>{const m=mid(c,g);return m==null?null:Math.floor(m*.95);};
 const buyTotal=(c,g,q)=>{const m=mid(c,g);return m==null?null:Math.ceil(m*1.05*(1+impact(g,q)/2))*q;};
 const sellTotal=(c,g,q)=>{const m=mid(c,g);return m==null?null:Math.floor(m*.95*Math.max(.35,1-impact(g,q)/2))*q;};
 const maxBuy=(c,g)=>{const m=mid(c,g);if(m==null)return 0;let lo=0,hi=Math.max(0,cap()-used());while(lo<hi){const x=Math.ceil((lo+hi)/2);if(buyTotal(c,g,x)<=S.cash)lo=x;else hi=x-1;}return lo;};
-function recordSeen(c){S.seen[c]=GOODS.map((_,g)=>{const m=mid(c,g);return m==null?null:Math.round(m);});}
+function recordSeen(c){S.seen[c]=GOODS.map((_,g)=>{const m=mid(c,g);return m==null?null:Math.ceil(m*1.05);});(S.seenDay||(S.seenDay={}))[c]=S.day;}
 function addLog(t,k){S.log.unshift({d:S.day,t,k:k||''});if(S.log.length>60)S.log.pop();}
 function dayTick(){
   S.prev=CITIES.map((_,c)=>GOODS.map((_,g)=>mid(c,g)));
@@ -155,6 +155,7 @@ function travelPlan(to){
 }
 function travelNow(to){          // logika podróży bez animacji
   const pl=travelPlan(to);if(pl.err)return pl.err;
+  recordSeen(S.city);
   S.cash-=pl.cost;S.stats.kmDone+=Math.round(DIST[S.city][to]);
   for(let i=0;i<pl.days;i++)dayTick();
   S.city=to;S.visited[to]=1;
