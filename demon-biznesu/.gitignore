@@ -1,0 +1,4 @@
+*.pem
+*.apk
+!android/template.apk
+node_modules
