@@ -69,13 +69,21 @@ function snd(k){if(!OPT.sound)return;try{AC=AC||new(window.AudioContext||window.
 }catch(e){}}
 function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2200);}
 
+let _scrollKey='',_scrollTop=0;
 function render(){
   const a=app();
+  const m0=$('#main'),key=UI.screen+'|'+UI.tab+'|'+(UI.city||'')+'|'+(UI.travel?1:0);
+  const keep=m0&&key===_scrollKey?m0.scrollTop:0;
   if(UI.screen==='menu')a.innerHTML=menuHTML();
   else if(UI.screen==='how')a.innerHTML=howHTML();
   else if(UI.screen==='scores')a.innerHTML=scoresHTML();
   else if(UI.screen==='end')a.innerHTML=endHTML();
   else a.innerHTML=gameHTML();
+  _scrollKey=key;
+  const m1=$('#main');
+  if(m1&&keep){m1.scrollTop=keep;}
+  if(UI.screen==='game'&&UI.sel&&m1){const s=m1.querySelector('.g.sel');if(s){const mr=m1.getBoundingClientRect(),sr=s.getBoundingClientRect();
+    if(sr.bottom>mr.bottom)m1.scrollTop+=Math.min(sr.bottom-mr.bottom+8,sr.top-mr.top-4);}}
   if(UI.screen==='game'&&UI.travel)startAnim();
 }
 function menuHTML(){
